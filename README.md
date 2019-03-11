@@ -1,5 +1,4 @@
 # aws-vpc-with-vuln-scanners
-Tutorial for Medium Post
 
 This Terraform script provisions a VPC with a private and public subnet; complete with an internet and NAT gateway. 
 
