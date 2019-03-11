@@ -147,6 +147,46 @@ resource "aws_instance" "redhat_instance" {
   }
 }
 
+# nexpose scanner
+resource "aws_instance" "nexpose_instance" {
+  ami                         = "${var.red_hat_ami}"
+  instance_type               = "t3.medium"
+  vpc_security_group_ids      = ["${aws_security_group.scanner_sg.id}"]
+  key_name                    = "${var.key_name}"
+  subnet_id                   = "${aws_subnet.public-subnet.id}"
+  associate_public_ip_address = true
+
+  tags {
+    Name = "Nexpose Scanner"
+  }
+
+  root_block_device {
+    volume_type           = "gp2"
+    volume_size           = 50
+    delete_on_termination = true
+  }
+
+  connection {
+    type        = "ssh"
+    user        = "ec2-user"
+    private_key = "${file("keys/testing-key.pem")}"
+  }
+
+  provisioner "file" {
+    source      = "files/Rapid7Setup-Linux64.bin"
+    destination = "/tmp/Rapid7Setup-Linux64.bin"
+  }
+
+  # update username and password
+  provisioner "remote-exec" {
+    inline = ["sudo yum update -y",
+      "sudo chmod +x /tmp/./Rapid7Setup-Linux64.bin",
+      "sudo /tmp/./Rapid7Setup-Linux64.bin -q -Vfirstname='Raven' -Vlastname='Crow' -Vcompany='Corvids International' -Vusername='myadmin' -Vpassword1='Y0uR_S3Cure_P@SSw0rd-H3rE' -Vpassword2='Y0uR_S3Cure_P@SSw0rd-H3rE'",
+      "sudo systemctl start nexposeconsole",
+    ]
+  }
+}
+
 # nessus scanner
 resource "aws_instance" "nessus_instance" {
   ami                         = "${var.red_hat_ami}"
@@ -183,46 +223,6 @@ resource "aws_instance" "nessus_instance" {
     inline = ["sudo yum update -y",
       "sudo rpm -ivh /tmp/Nessus-8.2.3-es7.x86_64.rpm",
       "sudo /bin/systemctl start nessusd.service",
-    ]
-  }
-}
-
-# nexpose scanner
-resource "aws_instance" "nexpose_instance" {
-  ami                         = "${var.red_hat_ami}"
-  instance_type               = "t3.medium"
-  vpc_security_group_ids      = ["${aws_security_group.scanner_sg.id}"]
-  key_name                    = "${var.key_name}"
-  subnet_id                   = "${aws_subnet.public-subnet.id}"
-  associate_public_ip_address = true
-
-  tags {
-    Name = "Nexpose Scanner"
-  }
-
-  root_block_device {
-    volume_type           = "gp2"
-    volume_size           = 50
-    delete_on_termination = true
-  }
-
-  connection {
-    type        = "ssh"
-    user        = "ec2-user"
-    private_key = "${file("keys/testing-key.pem")}"
-  }
-
-  provisioner "file" {
-    source      = "files/Rapid7Setup-Linux64.bin"
-    destination = "/tmp/Rapid7Setup-Linux64.bin"
-  }
-
-  # update username and password
-  provisioner "remote-exec" {
-    inline = ["sudo yum update -y",
-      "sudo chmod +x /tmp/./Rapid7Setup-Linux64.bin",
-      "sudo /tmp/./Rapid7Setup-Linux64.bin -q -Vfirstname='FIRSTNAME' -Vlastname='LASTNAME' -Vcompany='YOUR_COMPANY' -Vusername='my_admin' -Vpassword1='my_paSSword12345' -Vpassword2='my_paSSword12345'",
-      "sudo systemctl start nexposeconsole",
     ]
   }
 }
