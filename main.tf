@@ -70,7 +70,7 @@ resource "aws_route_table_association" "public-rt-assoc" {
 # create nat gateway
 resource "aws_nat_gateway" "gw" {
   allocation_id = "${aws_eip.elastic-ip.id}"
-  subnet_id     = "${aws_subnet.private-subnet.id}"
+  subnet_id     = "${aws_subnet.public-subnet.id}"
 
   tags = {
     Name = "NAT Gateway"
